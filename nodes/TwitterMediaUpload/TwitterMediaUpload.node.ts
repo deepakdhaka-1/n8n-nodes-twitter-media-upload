@@ -175,7 +175,7 @@ export class TwitterMediaUpload implements INodeType {
 					const initResponse = await this.helpers.request({
 						method: 'POST',
 						url: TWITTER_UPLOAD_URL,
-						headers: oauth.toHeader(initAuth),
+						headers: oauth.toHeader(initAuth) as IDataObject,
 						form: initData,
 						json: true,
 					});
@@ -227,7 +227,7 @@ export class TwitterMediaUpload implements INodeType {
 					const finalizeResponse = await this.helpers.request({
 						method: 'POST',
 						url: TWITTER_UPLOAD_URL,
-						headers: oauth.toHeader(finalizeAuth),
+						headers: oauth.toHeader(finalizeAuth) as IDataObject,
 						form: finalizeData,
 						json: true,
 					});
@@ -262,3 +262,4 @@ export class TwitterMediaUpload implements INodeType {
 		return [returnData];
 	}
 }
+
