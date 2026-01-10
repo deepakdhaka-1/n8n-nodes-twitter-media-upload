@@ -41,16 +41,17 @@
     ]
   },
   "devDependencies": {
+    "@types/crypto-js": "^4.2.2",
     "@typescript-eslint/parser": "^5.30.0",
     "eslint": "^8.0.0",
     "eslint-plugin-n8n-nodes-base": "^1.11.0",
     "gulp": "^4.0.2",
     "n8n-workflow": "*",
     "prettier": "^2.7.1",
-    "typescript": "^4.8.0"
+    "typescript": "^5.9.3"
   },
   "dependencies": {
-    "oauth-1.0a": "^2.2.6",
-    "crypto-js": "^4.1.1"
+    "crypto-js": "^4.2.0",
+    "oauth-1.0a": "^2.2.6"
   }
 }

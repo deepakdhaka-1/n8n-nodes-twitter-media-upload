@@ -52,6 +52,12 @@ class TwitterMediaUploadApi {
                 qs: {},
             },
         };
+        this.test = {
+            request: {
+                baseURL: 'https://api.twitter.com/1.1',
+                url: '/account/verify_credentials.json',
+            },
+        };
     }
 }
 exports.TwitterMediaUploadApi = TwitterMediaUploadApi;
