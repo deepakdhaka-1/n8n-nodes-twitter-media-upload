@@ -151,7 +151,7 @@ MIT
 ## Support
 
 For issues and feature requests, please visit:
-[GitHub Issues](https://github.com/yourusername/n8n-nodes-twitter-media-upload/issues)
+[GitHub Issues]](https://github.com/deepakdhaka-1/n8n-nodes-twitter-media-upload/issues)
 
 ## Contributing
 
