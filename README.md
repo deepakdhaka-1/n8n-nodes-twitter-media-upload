@@ -132,10 +132,6 @@ npm link n8n-nodes-twitter-media-upload
 
 ## Troubleshooting
 
-### "Invalid OAuth signature"
-- Verify your credentials are correct
-- Ensure there are no extra spaces in the credential fields
-
 ### "Media type not supported"
 - Check that your media type matches the actual file format
 - Try using the "Custom" option with the exact MIME type
