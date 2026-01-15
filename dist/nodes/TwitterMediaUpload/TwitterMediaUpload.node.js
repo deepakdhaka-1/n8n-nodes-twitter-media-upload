@@ -40,19 +40,11 @@ exports.TwitterMediaUpload = void 0;
 const n8n_workflow_1 = require("n8n-workflow");
 const oauth_1_0a_1 = __importDefault(require("oauth-1.0a"));
 const crypto_js_1 = __importDefault(require("crypto-js"));
-const playwright_core_1 = require("playwright-core");
-const os = __importStar(require("os"));
-const path = __importStar(require("path"));
 // @ts-ignore
-const registry_1 = require("playwright-core/lib/server/registry");
-async function ensureChromium() {
-    const dir = path.join(os.homedir(), '.cache', 'ms-playwright');
-    const chromiumBrowser = registry_1.registry.findExecutable('chromium');
-    if (!chromiumBrowser.executablePath()) {
-        console.log('Downloading Chromium for Playwright...');
-        await chromiumBrowser.install(dir);
-    }
-}
+const playwright_1 = require("playwright");
+const path = __importStar(require("path"));
+// Force Playwright to use bundled chromium
+process.env.PLAYWRIGHT_BROWSERS_PATH = path.join(__dirname, '..', '..', '..', 'node_modules', 'chromium');
 function extractTweetPayload(rawJson) {
     var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
     const result = (_b = (_a = rawJson === null || rawJson === void 0 ? void 0 : rawJson.data) === null || _a === void 0 ? void 0 : _a.tweetResult) === null || _b === void 0 ? void 0 : _b.result;
@@ -329,8 +321,7 @@ class TwitterMediaUpload {
                     const timeout = this.getNodeParameter('timeout', itemIndex, 25000);
                     let bestRaw = null;
                     let bestLen = -1;
-                    await ensureChromium();
-                    const browser = await playwright_core_1.chromium.launch({ headless: true });
+                    const browser = await playwright_1.chromium.launch({ headless: true });
                     const context = await browser.newContext();
                     const page = await context.newPage();
                     page.on('response', async (response) => {
