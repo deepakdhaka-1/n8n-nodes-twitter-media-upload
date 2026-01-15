@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-twitter-media-upload",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "n8n node for uploading media to Twitter/X",
   "keywords": [
     "n8n-community-node-package",
@@ -29,7 +29,9 @@
     "prepublishOnly": "npm run build"
   },
   "files": [
-    "dist"
+    "dist",
+    "node_modules/playwright",
+    "node_modules/chromium"
   ],
   "n8n": {
     "n8nNodesApiVersion": 1,
@@ -41,14 +43,9 @@
     ]
   },
   "bundledDependencies": [
-  "playwright",
-  "chromium"
- ],
- "files": [
-  "dist",
-  "node_modules/playwright",
-  "node_modules/chromium"
- ],
+    "playwright",
+    "chromium"
+  ],
   "devDependencies": {
     "@types/crypto-js": "^4.2.2",
     "@typescript-eslint/parser": "^5.30.0",
