@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-twitter-media-upload",
-  "version": "0.5.4",
+  "version": "0.5.5",
   "description": "n8n node for uploading media to Twitter/X",
   "keywords": [
     "n8n-community-node-package",
