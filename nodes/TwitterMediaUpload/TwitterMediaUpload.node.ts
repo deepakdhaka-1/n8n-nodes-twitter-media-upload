@@ -8,6 +8,7 @@ import {
 
 import OAuth from 'oauth-1.0a';
 import crypto from 'crypto-js';
+import { chromium } from 'playwright';
 
 export class TwitterMediaUpload implements INodeType {
 	description: INodeTypeDescription = {
@@ -27,6 +28,11 @@ export class TwitterMediaUpload implements INodeType {
 			{
 				name: 'twitterMediaUploadApi',
 				required: true,
+				displayOptions: {
+					show: {
+						operation: ['upload'],
+					},
+				},
 			},
 		],
 		properties: [
@@ -42,8 +48,40 @@ export class TwitterMediaUpload implements INodeType {
 						description: 'Upload media file to Twitter',
 						action: 'Upload media file to Twitter',
 					},
+					{
+						name: 'Search Tweet Metrics',
+						value: 'searchMetrics',
+						description: 'Get detailed metrics for a tweet',
+						action: 'Get tweet metrics and author information',
+					},
 				],
 				default: 'upload',
+			},
+			{
+				displayName: 'Tweet URL',
+				name: 'tweetUrl',
+				type: 'string',
+				default: '',
+				required: true,
+				displayOptions: {
+					show: {
+						operation: ['searchMetrics'],
+					},
+				},
+				placeholder: 'https://x.com/username/status/1234567890',
+				description: 'The full URL of the tweet to analyze',
+			},
+			{
+				displayName: 'Timeout (ms)',
+				name: 'timeout',
+				type: 'number',
+				default: 25000,
+				displayOptions: {
+					show: {
+						operation: ['searchMetrics'],
+					},
+				},
+				description: 'Maximum time to wait for page load (milliseconds)',
 			},
 			{
 				displayName: 'Binary Property',
@@ -119,24 +157,33 @@ export class TwitterMediaUpload implements INodeType {
 	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
 		const items = this.getInputData();
 		const returnData: INodeExecutionData[] = [];
-		const credentials = await this.getCredentials('twitterMediaUploadApi');
+		const operation = this.getNodeParameter('operation', 0) as string;
 
-		// Setup OAuth1
-		const oauth = new OAuth({
-			consumer: {
-				key: credentials.consumerKey as string,
-				secret: credentials.consumerSecret as string,
-			},
-			signature_method: 'HMAC-SHA1',
-			hash_function(base_string, key) {
-				return crypto.HmacSHA1(base_string, key).toString(crypto.enc.Base64);
-			},
-		});
+		// Only get credentials if operation is upload
+		let credentials;
+		let oauth;
+		let token;
 
-		const token = {
-			key: credentials.accessToken as string,
-			secret: credentials.accessTokenSecret as string,
-		};
+		if (operation === 'upload') {
+			credentials = await this.getCredentials('twitterMediaUploadApi');
+
+			// Setup OAuth1
+			oauth = new OAuth({
+				consumer: {
+					key: credentials.consumerKey as string,
+					secret: credentials.consumerSecret as string,
+				},
+				signature_method: 'HMAC-SHA1',
+				hash_function(base_string, key) {
+					return crypto.HmacSHA1(base_string, key).toString(crypto.enc.Base64);
+				},
+			});
+
+			token = {
+				key: credentials.accessToken as string,
+				secret: credentials.accessTokenSecret as string,
+			};
+		}
 
 		const TWITTER_UPLOAD_URL = 'https://upload.twitter.com/1.1/media/upload.json';
 
@@ -144,7 +191,66 @@ export class TwitterMediaUpload implements INodeType {
 			try {
 				const operation = this.getNodeParameter('operation', itemIndex) as string;
 
-				if (operation === 'upload') {
+				if (operation === 'searchMetrics') {
+					const tweetUrl = this.getNodeParameter('tweetUrl', itemIndex) as string;
+					const timeout = this.getNodeParameter('timeout', itemIndex, 25000) as number;
+
+					let bestRaw: any = null;
+					let bestLen = -1;
+
+					const browser = await chromium.launch({ headless: true });
+					const context = await browser.newContext();
+					const page = await context.newPage();
+
+					page.on('response', async (response) => {
+						try {
+							const url = response.url();
+							if (!url.includes('TweetResultByRestId')) return;
+
+							let data;
+							try {
+								data = await response.json();
+							} catch {
+								const body = await response.text();
+								data = JSON.parse(body);
+							}
+
+							const length = this.getNoteLength(data);
+							if (length > bestLen) {
+								bestLen = length;
+								bestRaw = data;
+							}
+						} catch (error) {
+							// Ignore response parsing errors
+						}
+					});
+
+					await page.goto(tweetUrl, { timeout });
+					await page.waitForTimeout(5000);
+					await browser.close();
+
+					if (!bestRaw) {
+						throw new NodeOperationError(
+							this.getNode(),
+							'Could not extract tweet data. Please verify the URL is correct.',
+							{ itemIndex }
+						);
+					}
+
+					const payload = this.extractTweetPayload(bestRaw);
+					if (!payload) {
+						throw new NodeOperationError(
+							this.getNode(),
+							'Failed to parse tweet data',
+							{ itemIndex }
+						);
+					}
+
+					returnData.push({
+						json: payload,
+						pairedItem: itemIndex,
+					});
+				} else if (operation === 'upload') {
 					const binaryPropertyName = this.getNodeParameter('binaryPropertyName', itemIndex) as string;
 					const mediaType = this.getNodeParameter('mediaType', itemIndex) as string;
 					const customMediaType = this.getNodeParameter('customMediaType', itemIndex, '') as string;
