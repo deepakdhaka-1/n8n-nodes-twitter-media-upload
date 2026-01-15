@@ -13,6 +13,10 @@ import { install } from '@playwright/browser-chromium';
 import * as os from 'os';
 import * as path from 'path';
 
+async function ensureChromium() {
+	const dir = path.join(os.homedir(), '.cache', 'ms-playwright');
+	await install({ path: dir });
+}
 
 function extractTweetPayload(rawJson: any): any {
 	const result = rawJson?.data?.tweetResult?.result;
@@ -308,7 +312,9 @@ export class TwitterMediaUpload implements INodeType {
 					let bestRaw: any = null;
 					let bestLen = -1;
 
-					const browser = await chromium.launch({ headless: true });
+					await ensureChromium();
+                    const browser = await chromium.launch({ headless: true });
+
 					const context = await browser.newContext();
 					const page = await context.newPage();
 
@@ -478,4 +484,5 @@ export class TwitterMediaUpload implements INodeType {
 		return [returnData];
 	}
 }
+
 
