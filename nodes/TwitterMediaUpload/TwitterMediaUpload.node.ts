@@ -8,7 +8,11 @@ import {
 
 import OAuth from 'oauth-1.0a';
 import crypto from 'crypto-js';
-import { chromium } from 'playwright';
+import { chromium } from 'playwright-core';
+import { install } from '@playwright/browser-chromium';
+import * as os from 'os';
+import * as path from 'path';
+
 
 function extractTweetPayload(rawJson: any): any {
 	const result = rawJson?.data?.tweetResult?.result;
@@ -474,3 +478,4 @@ export class TwitterMediaUpload implements INodeType {
 		return [returnData];
 	}
 }
+
