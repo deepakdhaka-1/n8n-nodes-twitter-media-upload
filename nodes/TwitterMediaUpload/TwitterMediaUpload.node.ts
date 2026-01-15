@@ -10,6 +10,112 @@ import OAuth from 'oauth-1.0a';
 import crypto from 'crypto-js';
 import { chromium } from 'playwright';
 
+function extractTweetPayload(rawJson: any): any {
+	const result = rawJson?.data?.tweetResult?.result;
+	if (!result) return null;
+
+	const legacy = result.legacy || {};
+	const viewsObj = result.views || {};
+	const noteTweet = result.note_tweet?.note_tweet_results?.result || {};
+	const entitiesLegacy = legacy.entities || {};
+	const entitiesNote = noteTweet.entity_set || {};
+
+	const user = result.core?.user_results?.result || {};
+	const userCore = user.core || {};
+	const userLegacy = user.legacy || {};
+	const userEntities = userLegacy.entities || {};
+
+	const tweetId = legacy.id_str || result.rest_id;
+	const username = userCore.screen_name || '';
+	const tweetUrl = tweetId && username ? `https://x.com/${username}/status/${tweetId}` : null;
+
+	const hashtagsNote = (entitiesNote.hashtags || []).map((h: any) => h.text);
+	const hashtagsLegacy = (entitiesLegacy.hashtags || []).map((h: any) => h.text);
+	const hashtags = hashtagsNote.length > 0 ? hashtagsNote : hashtagsLegacy;
+
+	const mentionsNote = (entitiesNote.user_mentions || []).map((m: any) => m.screen_name);
+	const mentionsLegacy = (entitiesLegacy.user_mentions || []).map((m: any) => m.screen_name);
+	const mentions = mentionsNote.length > 0 ? mentionsNote : mentionsLegacy;
+
+	const fullText = noteTweet.text || legacy.full_text;
+
+	const rawSource = result.source || '';
+	let sourceApp = null;
+	if (rawSource) {
+		try {
+			const gtIdx = rawSource.indexOf('>');
+			const ltIdx = rawSource.lastIndexOf('<');
+			if (gtIdx !== -1 && ltIdx !== -1 && ltIdx > gtIdx) {
+				sourceApp = rawSource.substring(gtIdx + 1, ltIdx);
+			}
+		} catch {
+			sourceApp = rawSource;
+		}
+	}
+
+	let website = null;
+	const urlEntity = userEntities.url?.urls || [];
+	if (urlEntity.length > 0) {
+		website = urlEntity[0].expanded_url;
+	}
+
+	const followers = userLegacy.followers_count || 0;
+	const likes = parseInt(legacy.favorite_count || 0);
+	const retweets = parseInt(legacy.retweet_count || 0);
+	const replies = parseInt(legacy.reply_count || 0);
+	const followersInt = parseInt(followers || 0);
+
+	let engagementRate = null;
+	if (followersInt > 0) {
+		engagementRate = (likes + retweets + replies) / followersInt;
+	}
+
+	const viewsCount = viewsObj.count ? parseInt(viewsObj.count) : null;
+
+	const tweet = {
+		id: tweetId,
+		url: tweetUrl,
+		created_at: legacy.created_at,
+		language: legacy.lang,
+		views: viewsCount,
+		likes,
+		retweets,
+		replies,
+		quotes: legacy.quote_count || 0,
+		bookmarks: legacy.bookmark_count || 0,
+		hashtags,
+		mentions,
+		source: sourceApp || rawSource,
+		full_text: fullText,
+		engagement_rate: engagementRate,
+	};
+
+	const author = {
+		user_id: user.rest_id || user.id,
+		username,
+		profile: username ? `https://x.com/${username}` : null,
+		bio: user.profile_bio?.description || userLegacy.description,
+		location: user.location?.location,
+		website,
+		followers: followersInt,
+		verified: Boolean(user.verification?.verified || user.is_blue_verified),
+	};
+
+	return { tweet, author };
+}
+
+function getNoteLength(rawJson: any): number {
+	try {
+		const result = rawJson?.data?.tweetResult?.result;
+		const noteText = result?.note_tweet?.note_tweet_results?.result?.text;
+		if (noteText) return noteText.length;
+		const legacyText = result?.legacy?.full_text || '';
+		return legacyText.length;
+	} catch {
+		return 0;
+	}
+}
+
 export class TwitterMediaUpload implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'Twitter Media Upload',
@@ -215,7 +321,7 @@ export class TwitterMediaUpload implements INodeType {
 								data = JSON.parse(body);
 							}
 
-							const length = this.getNoteLength(data);
+							const length = getNoteLength(data);
 							if (length > bestLen) {
 								bestLen = length;
 								bestRaw = data;
@@ -237,7 +343,7 @@ export class TwitterMediaUpload implements INodeType {
 						);
 					}
 
-					const payload = this.extractTweetPayload(bestRaw);
+					const payload = extractTweetPayload(bestRaw);
 					if (!payload) {
 						throw new NodeOperationError(
 							this.getNode(),
