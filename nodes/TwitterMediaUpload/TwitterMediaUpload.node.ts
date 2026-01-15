@@ -9,14 +9,23 @@ import {
 import OAuth from 'oauth-1.0a';
 import crypto from 'crypto-js';
 import { chromium } from 'playwright-core';
-import { install } from '@playwright/browser-chromium';
 import * as os from 'os';
 import * as path from 'path';
 
+// @ts-ignore
+import { registry } from 'playwright-core/lib/server/registry';
+
+
 async function ensureChromium() {
-	const dir = path.join(os.homedir(), '.cache', 'ms-playwright');
-	await install({ path: dir });
+  const dir = path.join(os.homedir(), '.cache', 'ms-playwright');
+  const chromiumBrowser = registry.findExecutable('chromium');
+
+  if (!chromiumBrowser.executablePath()) {
+    console.log('Downloading Chromium for Playwright...');
+    await chromiumBrowser.install(dir);
+  }
 }
+
 
 function extractTweetPayload(rawJson: any): any {
 	const result = rawJson?.data?.tweetResult?.result;
@@ -313,7 +322,7 @@ export class TwitterMediaUpload implements INodeType {
 					let bestLen = -1;
 
 					await ensureChromium();
-                    const browser = await chromium.launch({ headless: true });
+                                        const browser = await chromium.launch({ headless: true });
 
 					const context = await browser.newContext();
 					const page = await context.newPage();
@@ -484,5 +493,4 @@ export class TwitterMediaUpload implements INodeType {
 		return [returnData];
 	}
 }
-
 
