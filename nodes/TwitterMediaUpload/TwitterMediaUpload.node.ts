@@ -10,15 +10,6 @@ import OAuth from 'oauth-1.0a';
 import crypto from 'crypto-js';
 // @ts-ignore
 import { chromium } from 'playwright';
-import { install } from 'playwright/lib/install';
-async function ensureChromium() {
-	try {
-		await install({ browsers: ['chromium'] });
-	} catch (e) {
-		// already installed
-	}
-}
-
 
 function extractTweetPayload(rawJson: any): any {
 	const result = rawJson?.data?.tweetResult?.result;
@@ -315,8 +306,7 @@ export class TwitterMediaUpload implements INodeType {
 					let bestLen = -1;
 
 					
-                    await ensureChromium();
-const browser = await chromium.launch({ headless: true });
+                    const browser = await chromium.launch({ channel: 'chromium', headless: true });
 
 
 					const context = await browser.newContext();
@@ -488,6 +478,7 @@ const browser = await chromium.launch({ headless: true });
 		return [returnData];
 	}
 }
+
 
 
 
