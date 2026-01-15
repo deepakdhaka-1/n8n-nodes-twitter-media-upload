@@ -7,7 +7,6 @@ exports.TwitterMediaUpload = void 0;
 const n8n_workflow_1 = require("n8n-workflow");
 const oauth_1_0a_1 = __importDefault(require("oauth-1.0a"));
 const crypto_js_1 = __importDefault(require("crypto-js"));
-// @ts-ignore
 const playwright_1 = require("playwright");
 function extractTweetPayload(rawJson) {
     var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
@@ -285,7 +284,7 @@ class TwitterMediaUpload {
                     const timeout = this.getNodeParameter('timeout', itemIndex, 25000);
                     let bestRaw = null;
                     let bestLen = -1;
-                    const browser = await playwright_1.chromium.launch({ channel: 'chromium', headless: true });
+                    const browser = await playwright_1.chromium.launch({ headless: true });
                     const context = await browser.newContext();
                     const page = await context.newPage();
                     page.on('response', async (response) => {
