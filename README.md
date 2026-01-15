@@ -1,81 +1,66 @@
-# n8n-nodes-twitter-media-upload
+# n8n Twitter Media Upload & Tweet Metrics Node
 
-This is an n8n community node that allows you to upload media files (images, videos, audio) to Twitter/X.
+A custom **n8n** node that enables:
 
-# Upon Entering Credentials you will get Verification Failed, Avoid it. 
-````
-This is issue from Twitter API,
-````
-## Installation
+- Uploading media to **Twitter/X** using the Media Upload API
+- Extracting **comprehensive analytics** from any public tweet (no API credentials required)
 
-### Community Node Installation (Recommended)
-1. Go to **Settings > Community Nodes** in your n8n instance
-2. Click **Install**
-3. Enter `n8n-nodes-twitter-media-upload`
-4. Click **Install**
-
-
-
-
-### Manual Installation
-```bash
-npm install n8n-nodes-twitter-media-upload
-```
-
-## Project Structure
-
-```
-n8n-nodes-twitter-media-upload/
-├── credentials/
-│   └── TwitterMediaUploadApi.credentials.ts
-├── nodes/
-│   └── TwitterMediaUpload/
-│       └── TwitterMediaUpload.node.ts
-├── package.json
-├── tsconfig.json
-└── README.md
-```
+---
 
 ## Setup Instructions
 
 ### 1. Get Twitter API Credentials
 
-1. Go to [Twitter Developer Portal](https://developer.twitter.com/en/portal/dashboard)
-2. Create a new project and app
-3. Navigate to your app's **Keys and Tokens** tab
-4. Generate and save:
+1. Go to the Twitter Developer Portal  
+   https://developer.twitter.com/en/portal/dashboard
+
+2. Create a new **Project** and **App**
+
+3. Navigate to your app’s **Keys and Tokens** tab
+
+4. Generate and save the following:
    - API Key (Consumer Key)
    - API Key Secret (Consumer Secret)
    - Access Token
    - Access Token Secret
+
+---
 
 ### 2. Configure Credentials in n8n
 
 1. In n8n, go to **Credentials**
 2. Click **Add Credential**
 3. Search for **Twitter Media Upload API**
-4. Fill in the four required fields:
+4. Fill in:
    - Consumer Key
    - Consumer Secret
    - Access Token
    - Access Token Secret
 5. Click **Save**
 
+---
+
 ## Usage
 
-### Basic Workflow Example
+### Operation 1: Upload Media
 
-1. Add a node that provides binary data (e.g., HTTP Request, Read Binary File)
-2. Add the **Twitter Media Upload** node
-3. Select your Twitter credentials
-4. Configure:
-   - **Binary Property**: Name of the binary data property (default: `data`)
-   - **Media Type**: Select the appropriate media type (image/png, video/mp4, etc.)
-5. Execute the workflow
+Upload media files to Twitter and retrieve a `media_id` for use in tweets.
 
-### Output
+#### Requirements
 
-The node returns:
+- Twitter API credentials
+- Binary data input
+
+#### Configuration
+
+- Select **Upload Media** operation
+- Choose your Twitter credentials
+- Set **Binary Property Name** (default: `data`)
+- Select **Media Type** (PNG, JPEG, MP4, etc.)
+- Execute the node
+
+#### Output
+
 ```json
 {
   "media_id": "1234567890123456789",
@@ -85,70 +70,111 @@ The node returns:
   "media_type": "image/png"
 }
 ```
+# Operation 2: Search Tweet Metrics
 
-You can use the `media_id_string` in subsequent Twitter API calls to attach media to tweets.
+Extract comprehensive analytics from any public tweet without requiring Twitter API credentials.
 
-## Development
+---
 
-### Building the Node
+## Requirements
 
-```bash
-# Install dependencies
-npm install
+- Public Tweet URL  
+- Internet access  
+- No authentication required
 
-# Build
-npm run build
+---
 
-# Watch mode (for development)
-npm run dev
+## Configuration
+
+1. Select **Search Tweet Metrics** operation
+2. Enter the **Tweet URL**  
+   Example:  
+   `https://x.com/username/status/1234567890`
+3. (Optional) Set **Timeout**  
+   Default: `25000ms`
+4. Execute the node
+
+---
+
+## Output
+
+```json
+{
+  "tweet": {
+    "id": "",
+    "url": "",
+    "created_at": "Tue Oct 14 17:24:08 +0000 2025",
+    "language": "en",
+    "views": 2049,
+    "likes": 5,
+    "retweets": 0,
+    "replies": 0,
+    "quotes": 0,
+    "bookmarks": 0,
+    "hashtags": [""],
+    "mentions": [],
+    "source": "Twitter Web App",
+    "full_text": "Tweet content here...",
+    "engagement_rate": 0.0092701589
+  },
+  "author": {
+    "user_id": "",
+    "username": "",
+    "profile": "",
+    "bio": "Everything @HyperliquidX...",
+    "location": "",
+    "website": "",
+    "followers": 1699,
+    "verified": false
+  }
+}
 ```
+## Metrics Included
 
-### Local Testing
+### Tweet Metrics
 
-1. Link the package locally:
-```bash
-npm link
-```
+- Views
+- Likes
+- Retweets
+- Replies
+- Quotes
+- Bookmarks
+- Hashtags
+- Mentions
+- Full text content
+- Engagement rate calculation
+- Source application
+- Language detection
 
-2. In your n8n installation:
-```bash
-cd ~/.n8n/custom
-npm link n8n-nodes-twitter-media-upload
-```
+---
 
-3. Restart n8n
+## Author Metrics
 
-## Supported Media Types
+- User ID
+- Username
+- Profile URL
+- Bio
+- Location
+- Website
+- Follower count
+- Verification status
 
-- Images: PNG, JPEG, GIF, WebP
-- Videos: MP4, MOV
-- Custom: Enter any MIME type manually
+---
 
-## Twitter Media Upload Limits
+## Common Issues
 
-- Images: Max 5MB (JPEG, PNG), 15MB (GIF)
-- Videos: Max 512MB, 140 seconds
-- Media IDs expire after 24 hours
+### Could Not Extract Tweet Data
 
-## Troubleshooting
+- Ensure the tweet URL is correct
+- Confirm the tweet is public
+- Verify the tweet has not been deleted
+- Check if the account is private
+- Increase timeout value
 
-### "Media type not supported"
-- Check that your media type matches the actual file format
-- Try using the "Custom" option with the exact MIME type
+---
 
-### "File too large"
-- Ensure your file is within Twitter's size limits
-- Consider compressing large files before upload
+### Timeout Errors
 
-## License
-
-MIT
-
-## Support
-
-For issues and feature requests, please visit:
-[GitHub Issues]](https://github.com/deepakdhaka-1/n8n-nodes-twitter-media-upload/issues)
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
+- Increase timeout (default: `25000ms`)
+- Check network connectivity
+- Retry execution
