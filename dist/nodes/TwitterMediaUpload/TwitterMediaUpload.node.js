@@ -40,7 +40,8 @@ exports.TwitterMediaUpload = void 0;
 const n8n_workflow_1 = require("n8n-workflow");
 const oauth_1_0a_1 = __importDefault(require("oauth-1.0a"));
 const crypto_js_1 = __importDefault(require("crypto-js"));
-const puppeteer = __importStar(require("puppeteer"));
+const puppeteer = __importStar(require("puppeteer-core"));
+const chromium_1 = __importDefault(require("@sparticuz/chromium"));
 function extractTweetPayload(rawJson) {
     var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
     const result = (_b = (_a = rawJson === null || rawJson === void 0 ? void 0 : rawJson.data) === null || _a === void 0 ? void 0 : _a.tweetResult) === null || _b === void 0 ? void 0 : _b.result;
@@ -318,8 +319,10 @@ class TwitterMediaUpload {
                     let bestRaw = null;
                     let bestLen = -1;
                     const browser = await puppeteer.launch({
-                        headless: true,
-                        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+                        args: chromium_1.default.args,
+                        defaultViewport: chromium_1.default.defaultViewport,
+                        executablePath: await chromium_1.default.executablePath(),
+                        headless: chromium_1.default.headless,
                     });
                     const page = await browser.newPage();
                     page.on('response', async (response) => {
