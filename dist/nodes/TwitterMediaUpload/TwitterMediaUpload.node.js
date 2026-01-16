@@ -1,4 +1,37 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -7,7 +40,7 @@ exports.TwitterMediaUpload = void 0;
 const n8n_workflow_1 = require("n8n-workflow");
 const oauth_1_0a_1 = __importDefault(require("oauth-1.0a"));
 const crypto_js_1 = __importDefault(require("crypto-js"));
-const playwright_1 = require("playwright");
+const puppeteer = __importStar(require("puppeteer"));
 function extractTweetPayload(rawJson) {
     var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
     const result = (_b = (_a = rawJson === null || rawJson === void 0 ? void 0 : rawJson.data) === null || _a === void 0 ? void 0 : _a.tweetResult) === null || _b === void 0 ? void 0 : _b.result;
@@ -284,9 +317,11 @@ class TwitterMediaUpload {
                     const timeout = this.getNodeParameter('timeout', itemIndex, 25000);
                     let bestRaw = null;
                     let bestLen = -1;
-                    const browser = await playwright_1.chromium.launch({ headless: true });
-                    const context = await browser.newContext();
-                    const page = await context.newPage();
+                    const browser = await puppeteer.launch({
+                        headless: true,
+                        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+                    });
+                    const page = await browser.newPage();
                     page.on('response', async (response) => {
                         try {
                             const url = response.url();
@@ -310,7 +345,7 @@ class TwitterMediaUpload {
                             // Ignore response parsing errors
                         }
                     });
-                    await page.goto(tweetUrl, { timeout });
+                    await page.goto(tweetUrl, { timeout, waitUntil: 'networkidle2' });
                     await page.waitForTimeout(5000);
                     await browser.close();
                     if (!bestRaw) {
