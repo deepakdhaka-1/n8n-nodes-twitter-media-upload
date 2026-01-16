@@ -8,8 +8,7 @@ import {
 
 import OAuth from 'oauth-1.0a';
 import crypto from 'crypto-js';
-import * as puppeteer from 'puppeteer-core';
-import chromium from '@sparticuz/chromium';
+import { chromium } from 'playwright-chromium';
 
 function extractTweetPayload(rawJson: any): any {
 	const result = rawJson?.data?.tweetResult?.result;
@@ -179,18 +178,6 @@ export class TwitterMediaUpload implements INodeType {
 				description: 'The full URL of the tweet to analyze',
 			},
 			{
-				displayName: 'Timeout (ms)',
-				name: 'timeout',
-				type: 'number',
-				default: 25000,
-				displayOptions: {
-					show: {
-						operation: ['searchMetrics'],
-					},
-				},
-				description: 'Maximum time to wait for page load (milliseconds)',
-			},
-			{
 				displayName: 'Binary Property',
 				name: 'binaryPropertyName',
 				type: 'string',
@@ -300,19 +287,25 @@ export class TwitterMediaUpload implements INodeType {
 
 				if (operation === 'searchMetrics') {
 					const tweetUrl = this.getNodeParameter('tweetUrl', itemIndex) as string;
-					const timeout = this.getNodeParameter('timeout', itemIndex, 25000) as number;
 
 					let bestRaw: any = null;
 					let bestLen = -1;
 
-					const browser = await puppeteer.launch({
-						args: chromium.args,
-						defaultViewport: chromium.defaultViewport,
-						executablePath: await chromium.executablePath(),
-						headless: chromium.headless,
+					const browser = await chromium.launch({
+						headless: true,
+						args: [
+							'--no-sandbox',
+							'--disable-setuid-sandbox',
+							'--disable-dev-shm-usage',
+							'--disable-gpu',
+						],
 					});
 
-					const page = await browser.newPage();
+					const context = await browser.newContext({
+						userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+					});
+
+					const page = await context.newPage();
 
 					page.on('response', async (response) => {
 						try {
@@ -337,7 +330,7 @@ export class TwitterMediaUpload implements INodeType {
 						}
 					});
 
-					await page.goto(tweetUrl, { timeout, waitUntil: 'networkidle2' });
+					await page.goto(tweetUrl, { timeout: 30000, waitUntil: 'networkidle' });
 					await page.waitForTimeout(5000);
 					await browser.close();
 
