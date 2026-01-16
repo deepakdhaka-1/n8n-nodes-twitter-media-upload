@@ -8,7 +8,7 @@ import {
 
 import OAuth from 'oauth-1.0a';
 import crypto from 'crypto-js';
-import { chromium } from 'playwright';
+import * as puppeteer from 'puppeteer';
 
 function extractTweetPayload(rawJson: any): any {
 	const result = rawJson?.data?.tweetResult?.result;
@@ -304,9 +304,12 @@ export class TwitterMediaUpload implements INodeType {
 					let bestRaw: any = null;
 					let bestLen = -1;
 
-					const browser = await chromium.launch({ headless: true });
-					const context = await browser.newContext();
-					const page = await context.newPage();
+					const browser = await puppeteer.launch({
+						headless: true,
+						args: ['--no-sandbox', '--disable-setuid-sandbox'],
+					});
+
+					const page = await browser.newPage();
 
 					page.on('response', async (response) => {
 						try {
@@ -331,7 +334,7 @@ export class TwitterMediaUpload implements INodeType {
 						}
 					});
 
-					await page.goto(tweetUrl, { timeout });
+					await page.goto(tweetUrl, { timeout, waitUntil: 'networkidle2' });
 					await page.waitForTimeout(5000);
 					await browser.close();
 
