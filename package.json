@@ -47,12 +47,11 @@
     "gulp": "^4.0.2",
     "n8n-workflow": "*",
     "prettier": "^2.7.1",
-    "typescript": "^5.9.3"
+    "typescript": "^4.8.0"
   },
   "dependencies": {
-    "@sparticuz/chromium": "^119.0.2",
-    "crypto-js": "^4.1.1",
     "oauth-1.0a": "^2.2.6",
-    "puppeteer-core": "^21.11.0"
+    "crypto-js": "^4.1.1",
+    "playwright-chromium": "^1.40.0"
   }
 }
